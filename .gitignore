@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+
+.env
+backend/.env
+
+.vscode
+.vscode-server
+.cache
+.npm
+.local
+.config
+
+__pycache__/
+*.log
