@@ -8,6 +8,7 @@ router.get("/api/cart", requireUser, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT b.id, b.title, b.author, b.category, b.price, b.image, b.stock,
+              b.rating, b.review_count, b.is_top_pick,
               ci.quantity
        FROM cart_items ci
        JOIN books b ON ci.book_id = b.id
@@ -64,6 +65,7 @@ router.put("/api/cart", requireUser, async (req, res) => {
 
     const saved = await pool.query(
       `SELECT b.id, b.title, b.author, b.category, b.price, b.image, b.stock,
+              b.rating, b.review_count, b.is_top_pick,
               ci.quantity
        FROM cart_items ci
        JOIN books b ON ci.book_id = b.id

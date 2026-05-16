@@ -32,6 +32,7 @@ describe("BookGrid", () => {
     expect(
       screen.getByText(`Showing ${mockBooks.length} of ${mockBooks.length} books`)
     ).toBeInTheDocument();
+    expect(screen.getByText("Top Picks of the Week")).toBeInTheDocument();
   });
 
   it("filters by search query", async () => {

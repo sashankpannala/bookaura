@@ -39,4 +39,22 @@ function requireUser(req, res, next) {
   }
 }
 
-module.exports = { optionalAuth, requireUser, JWT_SECRET };
+function requireAdmin(req, res, next) {
+  const token = getToken(req);
+  if (!token) {
+    return res.status(401).json({ error: "Admin login required" });
+  }
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload.role !== "admin") {
+      return res.status(403).json({ error: "Admin account required" });
+    }
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Invalid or expired admin session" });
+  }
+}
+
+module.exports = { optionalAuth, requireUser, requireAdmin, JWT_SECRET };

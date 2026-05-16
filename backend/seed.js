@@ -51,15 +51,28 @@ async function seedDatabase() {
         UNIQUE(user_id, book_id)
       )
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS favorite_items (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, book_id)
+      )
+    `);
     await pool.query(
       "ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_address JSONB"
     );
+    await pool.query("ALTER TABLE books ADD COLUMN IF NOT EXISTS rating DECIMAL(2,1) DEFAULT 4.5");
+    await pool.query("ALTER TABLE books ADD COLUMN IF NOT EXISTS review_count INT DEFAULT 0");
+    await pool.query("ALTER TABLE books ADD COLUMN IF NOT EXISTS is_top_pick BOOLEAN DEFAULT FALSE");
+    await pool.query("ALTER TABLE books ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE");
 
     const adminHash = await bcrypt.hash("admin123", 10);
     const userHash = await bcrypt.hash("user123", 10);
 
     await pool.query(
-      "TRUNCATE cart_items, order_items, orders, admins, users, books RESTART IDENTITY CASCADE"
+      "TRUNCATE favorite_items, cart_items, order_items, orders, admins, users, books RESTART IDENTITY CASCADE"
     );
 
     const userResult = await pool.query(
@@ -90,6 +103,28 @@ async function seedDatabase() {
         book
       );
     }
+
+    await pool.query(`
+      UPDATE books
+      SET
+        rating = ROUND((3.8 + (random() * 1.2))::numeric, 1),
+        review_count = FLOOR(50 + (random() * 950))::int,
+        is_top_pick = false,
+        is_active = true
+    `);
+
+    await pool.query(`
+      WITH weekly_picks AS (
+        SELECT id
+        FROM books
+        ORDER BY rating DESC, review_count DESC
+        LIMIT 8
+      )
+      UPDATE books
+      SET is_top_pick = true
+      FROM weekly_picks
+      WHERE books.id = weekly_picks.id
+    `);
 
     console.log("Database seeded successfully");
     console.log("Admin: admin@bookaura.com / admin123");

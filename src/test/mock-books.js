@@ -6,6 +6,10 @@ export const books = [
     category: "Self Help",
     price: 16.99,
     image: "https://example.com/atomic.jpg",
+    stock: 12,
+    rating: 4.9,
+    reviewCount: 240,
+    isTopPick: true,
   },
   {
     id: 2,
@@ -14,6 +18,10 @@ export const books = [
     category: "Productivity",
     price: 14.99,
     image: "https://example.com/deep.jpg",
+    stock: 8,
+    rating: 4.8,
+    reviewCount: 190,
+    isTopPick: true,
   },
   {
     id: 36,
@@ -22,5 +30,9 @@ export const books = [
     category: "Fiction",
     price: 13.99,
     image: "https://example.com/midnight.jpg",
+    stock: 5,
+    rating: 4.6,
+    reviewCount: 160,
+    isTopPick: false,
   },
 ];

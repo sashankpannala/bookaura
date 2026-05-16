@@ -16,6 +16,7 @@ describe("ChatBot", () => {
 
     expect(screen.getByText("BookAura Assistant")).toBeInTheDocument();
     expect(screen.getByText(/Hello!/)).toBeInTheDocument();
+    expect(screen.getByText(/Top picks and book recommendations/)).toBeInTheDocument();
   });
 
   it("sends a message and displays bot reply", async () => {

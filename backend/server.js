@@ -4,7 +4,8 @@ const dotenv = require("dotenv");
 const pool = require("./db");
 const authRoutes = require("./routes/auth");
 const cartRoutes = require("./routes/cart");
-const { optionalAuth } = require("./middleware/auth");
+const favoriteRoutes = require("./routes/favorites");
+const { optionalAuth, requireAdmin } = require("./middleware/auth");
 const { findResponse } = require("./chatbot");
 
 dotenv.config();
@@ -15,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use(authRoutes);
 app.use(cartRoutes);
+app.use(favoriteRoutes);
 
 app.get("/", (req, res) => {
   res.send("BookAura backend is running");
@@ -23,14 +25,21 @@ app.get("/", (req, res) => {
 app.get("/api/books", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, title, author, category, price, image, stock
-       FROM books ORDER BY id ASC`
+      `SELECT id, title, author, category, price, image, stock,
+              rating, review_count, is_top_pick, is_active
+       FROM books
+       WHERE is_active = true
+       ORDER BY id ASC`
     );
     res.json(
       result.rows.map((book) => ({
         ...book,
         price: Number(book.price),
         stock: Number(book.stock),
+        rating: Number(book.rating),
+        reviewCount: Number(book.review_count),
+        isTopPick: Boolean(book.is_top_pick),
+        isActive: Boolean(book.is_active),
       }))
     );
   } catch (error) {
@@ -39,14 +48,174 @@ app.get("/api/books", async (req, res) => {
   }
 });
 
-app.post("/api/chatbot", (req, res) => {
+app.get("/api/admin/books", requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, author, category, price, image, stock,
+              rating, review_count, is_top_pick, is_active
+       FROM books
+       ORDER BY is_active DESC, id ASC`
+    );
+
+    res.json(
+      result.rows.map((book) => ({
+        ...book,
+        price: Number(book.price),
+        stock: Number(book.stock),
+        rating: Number(book.rating),
+        reviewCount: Number(book.review_count),
+        isTopPick: Boolean(book.is_top_pick),
+        isActive: Boolean(book.is_active),
+      }))
+    );
+  } catch (error) {
+    console.error("Admin books fetch error:", error.message);
+    res.status(500).json({ error: "Failed to load inventory" });
+  }
+});
+
+app.post("/api/admin/books", requireAdmin, async (req, res) => {
+  try {
+    const {
+      title,
+      author,
+      category,
+      price,
+      image,
+      stock,
+      rating = 4.5,
+      reviewCount = 0,
+      isTopPick = false,
+    } = req.body;
+
+    if (!title?.trim() || !author?.trim() || !category?.trim() || !image?.trim()) {
+      return res.status(400).json({ error: "Title, author, category, and image are required" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO books
+        (title, author, category, price, image, stock, rating, review_count, is_top_pick, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true)
+       RETURNING *`,
+      [
+        title.trim(),
+        author.trim(),
+        category.trim(),
+        Number(price) || 0,
+        image.trim(),
+        Number(stock) || 0,
+        Number(rating) || 4.5,
+        Number(reviewCount) || 0,
+        Boolean(isTopPick),
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Admin book create error:", error.message);
+    res.status(500).json({ error: "Failed to add book" });
+  }
+});
+
+app.put("/api/admin/books/:bookId", requireAdmin, async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    const {
+      title,
+      author,
+      category,
+      price,
+      image,
+      stock,
+      rating,
+      reviewCount,
+      isTopPick,
+      isActive,
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE books
+       SET title = $1,
+           author = $2,
+           category = $3,
+           price = $4,
+           image = $5,
+           stock = $6,
+           rating = $7,
+           review_count = $8,
+           is_top_pick = $9,
+           is_active = $10,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $11
+       RETURNING *`,
+      [
+        title?.trim(),
+        author?.trim(),
+        category?.trim(),
+        Number(price) || 0,
+        image?.trim(),
+        Number(stock) || 0,
+        Number(rating) || 0,
+        Number(reviewCount) || 0,
+        Boolean(isTopPick),
+        Boolean(isActive),
+        bookId,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Admin book update error:", error.message);
+    res.status(500).json({ error: "Failed to update book" });
+  }
+});
+
+app.delete("/api/admin/books/:bookId", requireAdmin, async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    const result = await pool.query(
+      `UPDATE books
+       SET is_active = false, stock = 0, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING id`,
+      [bookId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Book not found" });
+    }
+
+    await pool.query("DELETE FROM cart_items WHERE book_id = $1", [bookId]);
+
+    res.json({ message: "Book removed from store" });
+  } catch (error) {
+    console.error("Admin book delete error:", error.message);
+    res.status(500).json({ error: "Failed to remove book" });
+  }
+});
+
+app.post("/api/chatbot", async (req, res) => {
   const { query } = req.body;
 
   if (!query?.trim()) {
     return res.status(400).json({ error: "Query is required" });
   }
 
-  res.json({ response: findResponse(query) });
+  try {
+    const booksResult = await pool.query(
+      `SELECT id, title, author, category, price, rating
+       FROM books ORDER BY rating DESC, review_count DESC`
+    );
+
+    res.json({ response: findResponse(query, booksResult.rows) });
+  } catch (error) {
+    console.error("Chatbot catalog error:", error.message);
+    res.json({ response: findResponse(query) });
+  }
 });
 
 app.post("/api/orders", optionalAuth, async (req, res) => {
@@ -174,7 +343,7 @@ app.post("/api/orders", optionalAuth, async (req, res) => {
   }
 });
 
-app.get("/api/admin/orders", async (req, res) => {
+app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -209,7 +378,7 @@ app.get("/api/admin/orders", async (req, res) => {
   }
 });
 
-app.get("/api/admin/orders/:orderId", async (req, res) => {
+app.get("/api/admin/orders/:orderId", requireAdmin, async (req, res) => {
   try {
     const { orderId } = req.params;
 

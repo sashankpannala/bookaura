@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS favorite_items;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS admins;
@@ -33,6 +35,10 @@ CREATE TABLE books (
   price DECIMAL(10,2) NOT NULL,
   image TEXT NOT NULL,
   stock INT DEFAULT 10 CHECK (stock >= 0),
+  rating DECIMAL(2,1) DEFAULT 4.5 CHECK (rating >= 0 AND rating <= 5),
+  review_count INT DEFAULT 0 CHECK (review_count >= 0),
+  is_top_pick BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -64,5 +70,13 @@ CREATE TABLE cart_items (
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
   quantity INT NOT NULL CHECK (quantity > 0),
+  UNIQUE(user_id, book_id)
+);
+
+CREATE TABLE favorite_items (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, book_id)
 );

@@ -33,6 +33,7 @@ const knowledgeBase = {
     { keywords: ['account', 'profile', 'change password', 'update info'], response: 'You can manage your account settings by logging in and visiting your profile page. There you can:\n• Update personal information\n• Change your password\n• View order history\n• Manage addresses\n\nNeed help? Contact our support team!' },
     { keywords: ['create account', 'sign up', 'register'], response: 'Creating an account is easy! Click on "Sign Up" and fill in your details. You\'ll instantly get access to:\n• Order history\n• Saved addresses\n• Wishlist\n• Faster checkout\n\nSign up today to start shopping!' },
     { keywords: ['forgot password', 'reset password'], response: 'Click on "Forgot Password" on the login page and enter your email. You\'ll receive a password reset link. Follow the instructions to create a new password. If you don\'t receive the email, check your spam folder!' },
+    { keywords: ['favorite', 'favourite', 'wishlist', 'save book', 'saved books'], response: 'Use the heart button on any book card to add it to your favorites. Guests keep favorites in this browser, and logged-in users save favorites to their account.' },
   ],
 
   general: [
@@ -43,8 +44,46 @@ const knowledgeBase = {
 };
 
 // Function to find matching response based on user query
-function findResponse(userQuery) {
+function formatBookList(books) {
+  return books
+    .map(
+      (book, index) =>
+        `${index + 1}. ${book.title} by ${book.author} - ${Number(book.rating).toFixed(1)} stars ($${Number(book.price).toFixed(2)})`
+    )
+    .join('\n');
+}
+
+function findResponse(userQuery, books = []) {
   const query = userQuery.toLowerCase();
+
+  const topRatedBooks = [...books]
+    .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+    .slice(0, 5);
+
+  if (query.includes('top pick') || query.includes('top picks') || query.includes('best rated') || query.includes('highest rated')) {
+    if (topRatedBooks.length === 0) {
+      return 'Top picks are loading from the catalog. Please try again in a moment.';
+    }
+
+    return `Here are today's top-rated BookAura picks:\n${formatBookList(topRatedBooks)}\n\nYou can find these in the Top Picks section on the home page.`;
+  }
+
+  if (query.includes('rating') || query.includes('reviews') || query.includes('stars')) {
+    return 'Each book card now shows a star rating and review count from the database. You can sort visually by looking at Top Picks, which highlights highly rated books first.';
+  }
+
+  const matchingCategory = books.find((book) =>
+    query.includes(book.category.toLowerCase())
+  )?.category;
+
+  if (matchingCategory) {
+    const categoryBooks = books
+      .filter((book) => book.category === matchingCategory)
+      .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+      .slice(0, 4);
+
+    return `For ${matchingCategory}, I recommend:\n${formatBookList(categoryBooks)}\n\nUse the category filter on the catalog to see more.`;
+  }
   
   // Flatten knowledge base and search
   const allItems = [

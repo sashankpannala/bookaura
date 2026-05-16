@@ -5,7 +5,7 @@ const ChatBot = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: "Hello! 👋 I'm BookAura's assistant. I can help you with:\n• Book information and recommendations\n• Shipping & delivery policies\n• Payment & refund details\n• General questions\n\nWhat can I help you with?",
+      text: "Hello! I'm BookAura's assistant. I can help you with:\n• Top picks and book recommendations\n• Ratings and reviews\n• Shipping and delivery policies\n• Payment and refund details\n• Account and checkout questions\n\nTry asking: \"What are your top picks?\"",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -26,7 +26,6 @@ const ChatBot = ({ isOpen, onClose }) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    // Add user message
     const userMessage = {
       id: messages.length + 1,
       text: inputValue,
@@ -38,7 +37,6 @@ const ChatBot = ({ isOpen, onClose }) => {
     setIsLoading(true);
 
     try {
-      // Call backend chatbot API
       const response = await fetch("http://localhost:5000/api/chatbot", {
         method: 'POST',
         headers: {

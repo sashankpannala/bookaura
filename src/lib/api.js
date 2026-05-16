@@ -9,6 +9,9 @@ export function normalizeBook(row) {
     price: Number(row.price),
     image: row.image,
     stock: Number(row.stock ?? 0),
+    rating: Number(row.rating ?? row.rating_average ?? 0),
+    reviewCount: Number(row.reviewCount ?? row.review_count ?? 0),
+    isTopPick: Boolean(row.isTopPick ?? row.is_top_pick),
   };
 }
 
@@ -56,4 +59,41 @@ export async function saveCart(cartItems) {
       cartItems: cartItems.map(({ id, quantity }) => ({ id, quantity })),
     }),
   });
+}
+
+export async function fetchFavorites() {
+  const token = localStorage.getItem("token");
+  if (!token) return [];
+
+  const response = await fetch(`${API_URL}/api/favorites`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  return data.map(normalizeBook);
+}
+
+export async function toggleFavorite(bookId) {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  const response = await fetch(`${API_URL}/api/favorites/${bookId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    let message = "Failed to update favorite";
+    try {
+      const data = await response.json();
+      message = data.error || message;
+    } catch {
+      // Keep default message for non-JSON failures.
+    }
+    throw new Error(message);
+  }
+
+  return response.json();
 }

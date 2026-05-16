@@ -3,7 +3,9 @@ import { useBooks } from "../context/BooksContext";
 
 function Hero() {
   const { books, loading } = useBooks();
-  const featured = books.slice(0, 3);
+  const featured = [...books]
+    .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+    .slice(0, 3);
 
   return (
     <section className="max-w-7xl mx-auto px-6 py-20 lg:py-28">
@@ -24,7 +26,7 @@ function Hero() {
 
           <p className="mt-6 text-lg text-gray-600 max-w-xl leading-8">
             Discover handpicked books in AI, business, productivity, finance,
-            history, and fiction — loaded live from our database.
+            history, and fiction — curated for curious readers.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -50,7 +52,7 @@ function Hero() {
           <div className="absolute bottom-0 left-0 h-56 w-56 bg-white/10 blur-3xl rounded-full" />
 
           <div className="relative">
-            <p className="text-gray-300 text-sm mb-4">Featured reads</p>
+            <p className="text-gray-300 text-sm mb-4">Top-rated reads</p>
 
             <div className="grid grid-cols-3 gap-4">
               {featured.length > 0 ? (

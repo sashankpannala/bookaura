@@ -12,6 +12,9 @@ describe("BookCard", () => {
     expect(screen.getByText("Atomic Habits")).toBeInTheDocument();
     expect(screen.getByText("James Clear")).toBeInTheDocument();
     expect(screen.getByText("$16.99")).toBeInTheDocument();
+    expect(screen.getByText("4.9")).toBeInTheDocument();
+    expect(screen.getByText(/240 reviews/)).toBeInTheDocument();
+    expect(screen.getByText("Top Pick")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
   });
 
