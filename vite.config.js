@@ -4,4 +4,12 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  test: {
+    environment: "happy-dom",
+    globals: true,
+    setupFiles: "./src/test/setup.js",
+    css: false,
+    pool: "threads",
+    testTimeout: 15000,
+  },
 });

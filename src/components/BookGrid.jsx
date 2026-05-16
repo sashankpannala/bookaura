@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { books } from "../data/books";
+import { useBooks } from "../context/BooksContext";
 import BookCard from "./BookCard";
 
 function BookGrid() {
+  const { books, loading, error, reloadBooks } = useBooks();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
@@ -20,15 +21,36 @@ function BookGrid() {
     return matchesSearch && matchesCategory;
   });
 
+  if (loading) {
+    return (
+      <section id="books" className="max-w-7xl mx-auto px-6 py-14">
+        <p className="text-gray-500 text-center">Loading books from database...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="books" className="max-w-7xl mx-auto px-6 py-14 text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button
+          type="button"
+          onClick={reloadBooks}
+          className="bg-black text-white px-6 py-3 rounded-full font-semibold"
+        >
+          Retry
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section id="books" className="max-w-7xl mx-auto px-6 py-14">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
         <div>
-          <h2 className="text-4xl font-semibold tracking-tight">
-            Browse Books
-          </h2>
+          <h2 className="text-4xl font-semibold tracking-tight">Browse Books</h2>
           <p className="text-gray-500 mt-2">
-            Search by title, author, or category.
+            Live catalog from the database — search by title, author, or category.
           </p>
         </div>
 

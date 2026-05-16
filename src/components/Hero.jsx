@@ -1,13 +1,19 @@
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useBooks } from "../context/BooksContext";
 
 function Hero() {
+  const { books, loading } = useBooks();
+  const featured = books.slice(0, 3);
+
   return (
     <section className="max-w-7xl mx-auto px-6 py-20 lg:py-28">
       <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
         <div>
           <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm text-sm text-gray-600 mb-6">
             <Sparkles size={16} />
-            Curated collection of 36 premium books
+            {loading
+              ? "Loading catalog..."
+              : `Curated collection of ${books.length} premium books`}
           </div>
 
           <h1 className="text-6xl lg:text-7xl font-semibold tracking-[-0.05em] leading-[0.95]">
@@ -18,8 +24,7 @@ function Hero() {
 
           <p className="mt-6 text-lg text-gray-600 max-w-xl leading-8">
             Discover handpicked books in AI, business, productivity, finance,
-            history, and fiction — delivered through a clean premium shopping
-            experience.
+            history, and fiction — loaded live from our database.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -48,21 +53,24 @@ function Hero() {
             <p className="text-gray-300 text-sm mb-4">Featured reads</p>
 
             <div className="grid grid-cols-3 gap-4">
-              <img
-                src="https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg"
-                alt="Atomic Habits"
-                className="rounded-2xl shadow-xl rotate-[-6deg]"
-              />
-              <img
-                src="https://covers.openlibrary.org/b/isbn/9781455586691-L.jpg"
-                alt="Deep Work"
-                className="rounded-2xl shadow-xl translate-y-8"
-              />
-              <img
-                src="https://covers.openlibrary.org/b/isbn/9781492032649-L.jpg"
-                alt="Hands-On Machine Learning"
-                className="rounded-2xl shadow-xl rotate-[6deg]"
-              />
+              {featured.length > 0 ? (
+                featured.map((book, index) => (
+                  <img
+                    key={book.id}
+                    src={book.image}
+                    alt={book.title}
+                    className={`rounded-2xl shadow-xl object-cover h-40 w-full ${
+                      index === 0
+                        ? "rotate-[-6deg]"
+                        : index === 1
+                          ? "translate-y-8"
+                          : "rotate-[6deg]"
+                    }`}
+                  />
+                ))
+              ) : (
+                <p className="col-span-3 text-gray-400 text-sm">Loading covers...</p>
+              )}
             </div>
 
             <h2 className="text-white text-3xl font-semibold mt-14">

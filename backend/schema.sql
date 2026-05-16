@@ -1,6 +1,29 @@
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS books;
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
+  is_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE admins (
+  id SERIAL PRIMARY KEY,
+  user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE books (
   id SERIAL PRIMARY KEY,
@@ -9,23 +32,37 @@ CREATE TABLE books (
   category VARCHAR(100) NOT NULL,
   price DECIMAL(10,2) NOT NULL,
   image TEXT NOT NULL,
-  stock INT DEFAULT 10,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  stock INT DEFAULT 10 CHECK (stock >= 0),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
   customer_email VARCHAR(255),
-  total DECIMAL(10,2),
+  delivery_address JSONB,
+  total DECIMAL(10,2) NOT NULL,
+  order_status VARCHAR(50) DEFAULT 'placed',
   payment_status VARCHAR(50) DEFAULT 'pending',
   stripe_session_id TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
   order_id INT REFERENCES orders(id) ON DELETE CASCADE,
   book_id INT REFERENCES books(id),
-  quantity INT NOT NULL,
-  price DECIMAL(10,2) NOT NULL
+  quantity INT NOT NULL CHECK (quantity > 0),
+  price DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE cart_items (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  quantity INT NOT NULL CHECK (quantity > 0),
+  UNIQUE(user_id, book_id)
 );
