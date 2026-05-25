@@ -1,10 +1,9 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { MemoryRouter } from "react-router";
 import CartDrawer from "./CartDrawer";
-import { CartProvider, useCart } from "../context/CartContext";
-import { mockBook } from "../test/test-utils";
+import { useCart } from "../context/CartContext";
+import { mockBook, renderWithProviders } from "../test/test-utils";
 
 function CartDrawerHarness() {
   const cart = useCart();
@@ -24,13 +23,7 @@ function CartDrawerHarness() {
 
 describe("CartDrawer", () => {
   it("renders nothing when closed", () => {
-    render(
-      <MemoryRouter>
-        <CartProvider>
-          <CartDrawer />
-        </CartProvider>
-      </MemoryRouter>
-    );
+    renderWithProviders(<CartDrawer />);
 
     expect(screen.queryByText("Your Cart")).not.toBeInTheDocument();
   });
@@ -38,13 +31,7 @@ describe("CartDrawer", () => {
   it("shows items, subtotal, and checkout link when open", async () => {
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <CartProvider>
-          <CartDrawerHarness />
-        </CartProvider>
-      </MemoryRouter>
-    );
+    renderWithProviders(<CartDrawerHarness />);
 
     await user.click(screen.getByRole("button", { name: "Seed cart" }));
     await user.click(screen.getByRole("button", { name: "Open cart" }));
@@ -61,13 +48,7 @@ describe("CartDrawer", () => {
   it("closes when the X button is clicked", async () => {
     const user = userEvent.setup();
 
-    render(
-      <MemoryRouter>
-        <CartProvider>
-          <CartDrawerHarness />
-        </CartProvider>
-      </MemoryRouter>
-    );
+    renderWithProviders(<CartDrawerHarness />);
 
     await user.click(screen.getByRole("button", { name: "Open cart" }));
     const header = screen.getByText("Your Cart").parentElement;

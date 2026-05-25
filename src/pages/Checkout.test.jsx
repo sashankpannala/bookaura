@@ -83,7 +83,9 @@ describe("Checkout page", () => {
     await user.type(screen.getByPlaceholderText("New York"), "New York");
     await user.type(screen.getByPlaceholderText("NY"), "NY");
     await user.type(screen.getAllByPlaceholderText("10001")[0], "10001");
-    await user.type(screen.getByPlaceholderText("Jane Doe"), "Buyer Test");
+    const nameFields = screen.getAllByPlaceholderText("Jane Doe");
+    await user.type(nameFields[0], "Buyer Test");
+    await user.type(nameFields[1], "Buyer Test");
     await user.type(
       screen.getByPlaceholderText("4242 4242 4242 4242"),
       "4242424242424242"

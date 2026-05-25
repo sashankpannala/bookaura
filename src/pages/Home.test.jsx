@@ -1,15 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, beforeEach } from "vitest";
 import Home from "./Home";
-import { renderWithProviders } from "../test/test-utils";
-import { books as mockBooks } from "../test/mock-books";
+import { mockFetchBooks, renderWithProviders } from "../test/test-utils";
 
 describe("Home page", () => {
   beforeEach(() => {
-    fetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockBooks,
-    });
+    mockFetchBooks();
   });
 
   it("renders storefront with books from API", async () => {
@@ -20,7 +16,7 @@ describe("Home page", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Atomic Habits")).toBeInTheDocument();
+      expect(screen.getAllByText("Atomic Habits").length).toBeGreaterThan(0);
     });
   });
 });

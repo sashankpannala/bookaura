@@ -1,32 +1,20 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import BookGrid from "./BookGrid";
-import { BooksProvider } from "../context/BooksContext";
-import { renderWithProviders } from "../test/test-utils";
+import { mockFetchBooks, renderWithProviders } from "../test/test-utils";
 import { books as mockBooks } from "../test/mock-books";
-
-function renderBookGrid() {
-  return renderWithProviders(
-    <BooksProvider>
-      <BookGrid />
-    </BooksProvider>
-  );
-}
 
 describe("BookGrid", () => {
   beforeEach(() => {
-    fetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockBooks,
-    });
+    mockFetchBooks();
   });
 
   it("loads and shows books from the API", async () => {
-    renderBookGrid();
+    renderWithProviders(<BookGrid />);
 
     await waitFor(() => {
-      expect(screen.getByText("Atomic Habits")).toBeInTheDocument();
+      expect(screen.getAllByText("Atomic Habits").length).toBeGreaterThan(0);
     });
 
     expect(
@@ -37,9 +25,11 @@ describe("BookGrid", () => {
 
   it("filters by search query", async () => {
     const user = userEvent.setup();
-    renderBookGrid();
+    renderWithProviders(<BookGrid />);
 
-    await waitFor(() => screen.getByText("Atomic Habits"));
+    await waitFor(() => {
+      expect(screen.getAllByText("Atomic Habits").length).toBeGreaterThan(0);
+    });
 
     await user.type(screen.getByPlaceholderText("Search books..."), "Atomic");
 

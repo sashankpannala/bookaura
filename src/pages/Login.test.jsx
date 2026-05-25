@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 import Login from "./Login";
-import { renderWithProviders } from "../test/test-utils";
+import { mockFetchBooks, renderWithProviders } from "../test/test-utils";
 
 describe("Login page", () => {
   it("renders the sign-in form", async () => {
@@ -20,12 +20,25 @@ describe("Login page", () => {
     );
   });
 
+  beforeEach(() => {
+    mockFetchBooks();
+  });
+
   it("shows error on failed login", async () => {
     const user = userEvent.setup();
 
-    fetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "Invalid credentials" }),
+    fetch.mockImplementation((url) => {
+      if (String(url).includes("/auth/login")) {
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "Invalid credentials" }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => [],
+      });
     });
 
     renderWithProviders(<Login />, { route: "/login" });

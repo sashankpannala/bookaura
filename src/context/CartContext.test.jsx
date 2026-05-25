@@ -1,9 +1,14 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { CartProvider, useCart } from "./CartContext";
+import AuthProvider from "./AuthContext";
 import { mockBook } from "../test/test-utils";
 
-const wrapper = ({ children }) => <CartProvider>{children}</CartProvider>;
+const wrapper = ({ children }) => (
+  <AuthProvider>
+    <CartProvider>{children}</CartProvider>
+  </AuthProvider>
+);
 
 describe("CartContext", () => {
   it("starts empty with drawer closed", () => {
